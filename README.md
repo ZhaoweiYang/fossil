@@ -2,6 +2,12 @@
 
 一个化石**拍卖 + 一口价交易**平台原型：用户可以缴纳保证金参与拍卖出价，可以把自己的化石上架出售，平台还会展示历史"低买高卖"的盈利案例，并在购买时给出**价格走势、涨幅预测以及同品类（类似品）的涨幅对比**。
 
+**🔗 在线预览（GitHub Pages）：https://zhaoweiyang.github.io/fossil/**
+
+> 该平台有两种运行形态，共用同一套前端与业务逻辑：
+> - **完整模式**：`node server.js` 启动 REST API + 静态资源（拍卖/上架/购买等状态在服务端内存中）。
+> - **静态模式**：GitHub Pages 部署，前端通过 `api.local.js` 把同一套 `store.js` 业务逻辑跑在浏览器里，**无需后端**即可体验全部功能（数据在当前标签页内存中，刷新即重置）。
+
 > ⚠️ 演示原型：所有数据为模拟生成，价格趋势为统计模型预测，**不构成任何投资建议**。受文物保护法管制的标本（如恐龙蛋）仅作科普展示，禁止交易。
 
 ## ✨ 核心功能
@@ -45,6 +51,16 @@ npm start            # 等价于 node server.js
 ```bash
 PORT=8080 node server.js
 ```
+
+## ☁️ 部署到 GitHub Pages
+
+`.github/workflows/deploy-pages.yml` 会在推送到默认分支时自动：
+
+1. 把 `public/` 前端与 `src/` 业务逻辑组装到 `_site/`；
+2. 用 `api.local.js`（浏览器端 store 适配器）覆盖 `api.js`，使前端无需后端即可运行；
+3. 通过官方 `configure-pages` / `upload-pages-artifact` / `deploy-pages` 发布到 Pages。
+
+发布地址：<https://zhaoweiyang.github.io/fossil/>
 
 ## 🧪 测试
 

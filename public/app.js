@@ -1,29 +1,14 @@
 // 化石平台前端 / Fossil platform SPA.
-'use strict';
+// `api` is pluggable: against the Node server it talks HTTP (api.js); in the
+// static GitHub Pages build the same module name resolves to a client-side
+// store, so the entire SPA runs with no backend.
+import * as api from './api.js';
 
 const app = document.getElementById('app');
 const modalRoot = document.getElementById('modal-root');
 const toastEl = document.getElementById('toast');
 
 // ---------- helpers ----------
-const api = {
-  async get(p) {
-    const r = await fetch(p);
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
-    return r.json();
-  },
-  async post(p, body) {
-    const r = await fetch(p, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {}),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || r.statusText);
-    return data;
-  },
-};
-
 const yuan = (n) =>
   '¥' + Math.round(Number(n)).toLocaleString('zh-CN');
 const pct = (f) => (f >= 0 ? '+' : '') + (f * 100).toFixed(1) + '%';

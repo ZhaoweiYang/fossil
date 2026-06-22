@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+# Builds a static version of the platform and publishes it to GitHub Pages.
+# The SPA's API layer is pluggable: for Pages we swap the HTTP adapter
+# (api.js) for the client-side store adapter (api.local.js), so the whole app
+# runs in the browser with no backend.
+
+on:
+  push:
+    branches: ["claude/zealous-curie-gc3k9v"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress one.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble static site
+        run: |
+          set -eux
+          mkdir -p _site
+          # frontend assets
+          cp public/index.html public/styles.css public/charts.js public/app.js \
+             public/api.js public/api.local.js _site/
+          # shared business logic (pure JS, no Node APIs) runs in the browser
+          cp src/data.js src/analytics.js src/store.js _site/
+          # In the static build, app.js's `import './api.js'` must resolve to the
+          # client-side store adapter instead of the HTTP one.
+          cp _site/api.local.js _site/api.js
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
