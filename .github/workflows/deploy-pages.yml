@@ -5,9 +5,11 @@ name: Deploy to GitHub Pages
 # (api.js) for the client-side store adapter (api.local.js), so the whole app
 # runs in the browser with no backend.
 
+# Manual-only: this path requires Pages "Source" to be set to "GitHub Actions"
+# in repo Settings first (the Actions GITHUB_TOKEN cannot create the Pages
+# site on its own). If instead you use "Deploy from a branch" -> /docs (the
+# committed static build), you don't need this workflow at all.
 on:
-  push:
-    branches: ["claude/zealous-curie-gc3k9v"]
   workflow_dispatch:
 
 permissions:

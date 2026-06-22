@@ -54,13 +54,22 @@ PORT=8080 node server.js
 
 ## ☁️ 部署到 GitHub Pages
 
-`.github/workflows/deploy-pages.yml` 会在推送到默认分支时自动：
+仓库已内置一份预构建的静态站点在 [`docs/`](docs/)（前端 + 浏览器端业务逻辑 +
+`.nojekyll`）。**只需在仓库里开一次开关**（API token 无权代为开启）：
 
-1. 把 `public/` 前端与 `src/` 业务逻辑组装到 `_site/`；
-2. 用 `api.local.js`（浏览器端 store 适配器）覆盖 `api.js`，使前端无需后端即可运行；
-3. 通过官方 `configure-pages` / `upload-pages-artifact` / `deploy-pages` 发布到 Pages。
+> **Settings → Pages → Build and deployment → Source: `Deploy from a branch`
+> → Branch: `claude/zealous-curie-gc3k9v` / 目录 `/docs` → Save**
 
-发布地址：<https://zhaoweiyang.github.io/fossil/>
+约 1 分钟后即可访问：<https://zhaoweiyang.github.io/fossil/>
+
+### 备选：用 GitHub Actions 部署
+
+如果偏好 CI 构建，可改为 **Source: `GitHub Actions`**，然后手动运行
+`.github/workflows/deploy-pages.yml`（`workflow_dispatch`）。该工作流会把
+`public/` + `src/` 组装为静态包并用 `api.local.js` 覆盖 `api.js` 后发布。
+
+> 注：Actions 自带的 `GITHUB_TOKEN` 无法**首次创建** Pages 站点，因此无论哪种方式，
+> 都需要先在 Settings 里手动把 Pages 打开一次。
 
 ## 🧪 测试
 
