@@ -4,6 +4,10 @@
 
 **🔗 在线预览（GitHub Pages）：https://zhaoweiyang.github.io/fossil/**
 
+> 📱 **默认即为移动端 H5（接近原生 App 体验）**：底部 Tab 导航、详情以底部弹层（bottom sheet）滑出、可拖拽下滑关闭、安全区适配、并支持 **PWA「添加到主屏幕」** 后全屏独立运行。用手机打开上面的链接，或在 iOS Safari / Android Chrome 里「添加到主屏幕」即可像 App 一样使用。桌面宽屏版在 [`/desktop.html`](https://zhaoweiyang.github.io/fossil/desktop.html)。
+>
+> 🖼️ 商品配图为 **维基共享资源（Wikimedia Commons）** 上的真实化石照片（公有领域 / CC 授权），加载失败时回退为表情图标。
+
 > 该平台有两种运行形态，共用同一套前端与业务逻辑：
 > - **完整模式**：`node server.js` 启动 REST API + 静态资源（拍卖/上架/购买等状态在服务端内存中）。
 > - **静态模式**：GitHub Pages 部署，前端通过 `api.local.js` 把同一套 `store.js` 业务逻辑跑在浏览器里，**无需后端**即可体验全部功能（数据在当前标签页内存中，刷新即重置）。
@@ -25,18 +29,25 @@
 **零运行时依赖** —— 只用 Node.js 内置模块，`node server.js` 即可启动，无需 `npm install`。
 
 ```
-server.js            # 零依赖 HTTP 服务：静态资源 + REST API
+server.js              # 零依赖 HTTP 服务：静态资源 + REST API
 src/
-  data.js            # 种子数据（化石目录、拍卖、在售、盈利案例）
-  analytics.js       # 价格历史生成、预测、ROI 计算、品类趋势聚合
-  store.js           # 内存状态 + 业务规则（出价 / 上架 / 购买）
+  data.js              # 种子数据 + 真实化石图映射（Wikimedia Commons）
+  analytics.js         # 价格历史生成、预测、ROI 计算、品类趋势聚合
+  store.js             # 内存状态 + 业务规则（出价 / 上架 / 购买）
 public/
-  index.html         # 单页应用入口
-  styles.css         # 拍卖行风格主题
-  app.js             # 路由、视图渲染、交互
-  charts.js          # 轻量 SVG 折线图 / 迷你走势图（无第三方图表库）
+  index.html           # 📱 移动端 H5 入口（默认）
+  m.styles.css         # 移动端原生风格样式（底栏 / 弹层 / 安全区）
+  m.app.js             # 移动端 SPA（Tab 导航、bottom sheet、交互）
+  manifest.webmanifest # PWA 清单（可添加到主屏、独立全屏运行）
+  sw.js                # Service Worker（应用外壳缓存 + 离线兜底）
+  icon.svg             # 应用图标（菊石螺旋）
+  desktop.html         # 🖥️ 桌面宽屏版入口
+  styles.css / app.js  # 桌面版样式与逻辑
+  api.js               # API 适配器：HTTP（服务端）
+  api.local.js         # API 适配器：浏览器端 store（静态部署，无后端）
+  charts.js            # 轻量 SVG 折线图 / 迷你走势图（无第三方图表库）
 test/
-  platform.test.js   # node:test 业务逻辑单元测试
+  platform.test.js     # node:test 业务逻辑单元测试
 ```
 
 ## 🚀 运行

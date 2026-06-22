@@ -8,6 +8,7 @@ import {
   SALES,
   AUCTION_SEED,
   LISTING_SEED,
+  imageFor,
 } from './data.js';
 import {
   priceHistory,
@@ -96,6 +97,7 @@ function fossilCard(fossil) {
     grade: fossil.grade,
     rarity: fossil.rarity,
     icon: fossil.icon,
+    image: imageFor(fossil.id, 800),
     basePrice: fossil.basePrice,
     appreciation: fossil.appreciation,
     description: fossil.description,
@@ -173,7 +175,7 @@ export function getListings() {
 
 function saleView(s) {
   const r = computeReturn(s.buyPrice, s.sellPrice, s.buyDate, s.sellDate);
-  return { ...s, ...r };
+  return { ...s, image: imageFor(s.id, 400), ...r };
 }
 
 export function getSales() {

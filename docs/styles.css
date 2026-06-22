@@ -94,6 +94,8 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 22px 60px; }
   border: 1px solid rgba(212,175,55,.4); padding: 2px 8px; border-radius: 20px;
 }
 .thumb.lg { height: 200px; font-size: 90px; }
+.thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.thumb .rarity { z-index: 2; }
 
 .card h3 { font-size: 15.5px; margin-top: 12px; }
 .species { color: var(--muted); font-style: italic; font-size: 12.5px; }

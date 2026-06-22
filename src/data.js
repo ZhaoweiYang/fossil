@@ -327,3 +327,43 @@ export const LISTING_SEED = [
   { fossilId: 'fos-011', seller: '展柜精选', price: 9500, condition: '展示级' },
   { fossilId: 'fos-012', seller: '新手建仓', price: 4350, condition: '全品' },
 ];
+
+// 真实化石照片 / Real fossil photos sourced from Wikimedia Commons
+// (public-domain / Creative Commons). Values are exact Commons file names;
+// commonsImage() turns them into Special:FilePath thumbnail URLs that resolve
+// to the right image on the client. The UI falls back to an emoji if an image
+// fails to load, so it always degrades gracefully.
+export const IMAGES = {
+  'fos-001': 'Isotelus maximus fossil trilobite (Upper Ordovician, Adams County, Ohio, USA) 4.jpg',
+  'fos-002': 'Iridescent Ammonite Fossil.jpg',
+  'fos-003': 'Tyrannosaurus rex specimen at the Houston Museum of Natural Science.JPG',
+  'fos-004': 'Spinosaurus skeleton.jpg',
+  'fos-005': 'Megalodon tooth with great white sharks teeth-3.jpg',
+  'fos-006': 'Baltic amber inclusions - Ant (Hymenoptera, Formicidae).JPG',
+  'fos-007': "Fossil fish (Fossil Butte Member, Green River Formation, Lower Eocene; Ulrich's Fossil Quarry, west of Kemmerer, Wyoming, USA) 5.jpg",
+  'fos-008': 'Mosasaurus hoffmannii - skeleton.jpg',
+  'fos-009': 'Egg nest of Oviraptor AMNH 6508.jpg',
+  'fos-010': 'Sphenodiscus pleurisepta (fossil ammonite) (Fox Hills Formation, Upper Cretaceous; Wyoming, USA).jpg',
+  'fos-011': 'Isotelus maximus fossil trilobite (Upper Ordovician, Adams County, Ohio, USA) 4.jpg',
+  'fos-012': 'Megalodon tooth with great white sharks teeth-3.jpg',
+  // 盈利案例配图 / images for the profit case studies
+  'sale-001': 'Tyrannosaurus rex specimen at the Houston Museum of Natural Science.JPG',
+  'sale-002': 'Megalodon tooth with great white sharks teeth-3.jpg',
+  'sale-003': 'Isotelus maximus fossil trilobite (Upper Ordovician, Adams County, Ohio, USA) 4.jpg',
+  'sale-004': 'Iridescent Ammonite Fossil.jpg',
+  'sale-005': 'Baltic amber inclusions - Ant (Hymenoptera, Formicidae).JPG',
+  'sale-006': 'Spinosaurus skeleton.jpg',
+};
+
+const COMMONS_FILEPATH = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
+
+// Build a Wikimedia Commons thumbnail URL from a file name (or return null).
+export function commonsImage(file, width = 800) {
+  if (!file) return null;
+  return `${COMMONS_FILEPATH}${encodeURIComponent(file)}?width=${width}`;
+}
+
+// Convenience: image URL for a catalog/sale id.
+export function imageFor(id, width = 800) {
+  return commonsImage(IMAGES[id], width);
+}

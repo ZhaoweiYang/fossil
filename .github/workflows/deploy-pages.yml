@@ -33,12 +33,11 @@ jobs:
         run: |
           set -eux
           mkdir -p _site
-          # frontend assets
-          cp public/index.html public/styles.css public/charts.js public/app.js \
-             public/api.js public/api.local.js _site/
+          # all frontend assets (mobile H5 + desktop + PWA manifest/sw/icon)
+          cp public/* _site/
           # shared business logic (pure JS, no Node APIs) runs in the browser
           cp src/data.js src/analytics.js src/store.js _site/
-          # In the static build, app.js's `import './api.js'` must resolve to the
+          # In the static build, `import './api.js'` must resolve to the
           # client-side store adapter instead of the HTTP one.
           cp _site/api.local.js _site/api.js
 

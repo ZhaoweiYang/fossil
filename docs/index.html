@@ -2,43 +2,49 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>古生代 · 化石拍卖与交易平台</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>古生代 · 化石拍卖</title>
+  <meta name="description" content="化石拍卖与交易 · 价格走势与涨幅预测" />
+  <meta name="theme-color" content="#0e1116" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="古生代" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="stylesheet" href="m.styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="logo">🦴</span>
-      <div>
-        <h1>古生代 <span class="brand-sub">FOSSILIA</span></h1>
-        <p class="tagline">化石拍卖 · 市场交易 · 价值趋势</p>
-      </div>
-    </div>
-    <nav class="tabs" id="tabs">
-      <button data-route="dashboard" class="active">概览</button>
-      <button data-route="auctions">🔨 拍卖行</button>
-      <button data-route="market">🛒 市场购买</button>
-      <button data-route="sell">📤 我要出售</button>
-      <button data-route="cases">📈 赚钱案例</button>
-    </nav>
-  </header>
+  <main id="app"><div class="loading">加载中…</div></main>
 
-  <main id="app">
-    <!-- views injected here -->
-  </main>
+  <nav class="tabbar" id="tabbar">
+    <button data-tab="home" class="active" aria-label="首页">
+      <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/></svg>
+      <span>首页</span>
+    </button>
+    <button data-tab="auctions" aria-label="拍卖">
+      <svg viewBox="0 0 24 24"><path d="M3 21h8"/><path d="M6.5 13.8l4.2-4.2"/><path d="M9.4 7.6l6 6"/><path d="M12.6 4.4l6 6-2.4 2.4-6-6z"/></svg>
+      <span>拍卖</span>
+    </button>
+    <button data-tab="market" aria-label="市场">
+      <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+      <span>市场</span>
+    </button>
+    <button data-tab="sell" aria-label="出售">
+      <svg viewBox="0 0 24 24"><path d="M12 16V4.5"/><path d="M7.5 9 12 4.5 16.5 9"/><path d="M5 20h14"/></svg>
+      <span>出售</span>
+    </button>
+    <button data-tab="cases" aria-label="案例">
+      <svg viewBox="0 0 24 24"><path d="M4 5v14h16"/><path d="M7 15l4-5 3 3 4-6"/></svg>
+      <span>案例</span>
+    </button>
+  </nav>
 
-  <!-- modal host -->
-  <div id="modal-root"></div>
-
+  <div id="sheet-root"></div>
   <div id="toast" class="toast" hidden></div>
 
-  <footer class="footer">
-    <p>原型演示 · 数据为模拟生成，价格趋势为统计模型预测，<b>不构成任何投资建议</b>。受文物保护法管制的标本（如恐龙蛋）仅作科普展示。</p>
-  </footer>
-
   <script src="charts.js"></script>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="m.app.js"></script>
 </body>
 </html>

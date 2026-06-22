@@ -39,7 +39,10 @@ function fmtCountdown(ms) {
 }
 
 function thumb(f, big = false) {
-  return `<div class="thumb ${big ? 'lg' : ''}">${f.icon || '🦴'}${
+  const img = f.image
+    ? `<img src="${esc(f.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+    : '';
+  return `<div class="thumb ${big ? 'lg' : ''}"><span class="emoji">${f.icon || '🦴'}</span>${img}${
     f.rarity ? `<span class="rarity">${esc(f.rarity)}</span>` : ''
   }</div>`;
 }
