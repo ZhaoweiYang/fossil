@@ -14,6 +14,18 @@
   <link rel="apple-touch-icon" href="icon.svg" />
   <link rel="icon" href="icon.svg" />
   <link rel="stylesheet" href="m.styles.css" />
+  <script>
+    // First-launch onboarding gate: send new users to the "0 元免费一年" install
+    // page once. After they开通 or skip, a flag is set and the app loads directly.
+    (function () {
+      try {
+        if (!localStorage.getItem('gsd_pro_trial') &&
+            !/[?&]noonboard/.test(location.search)) {
+          location.replace('install.html');
+        }
+      } catch (_) {}
+    })();
+  </script>
 </head>
 <body>
   <main id="app"><div class="loading">加载中…</div></main>

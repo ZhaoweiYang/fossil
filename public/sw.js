@@ -3,7 +3,7 @@
 // (so deploys appear immediately when online) with a cache fallback for
 // offline; cross-origin requests (e.g. Wikimedia images) pass through.
 
-const CACHE = 'fossilia-v1';
+const CACHE = 'fossilia-v2';
 
 // Always-present shell files. Logic modules (store/analytics/data) only exist
 // in the static build, so they are cached at runtime rather than precached
@@ -11,6 +11,7 @@ const CACHE = 'fossilia-v1';
 const SHELL = [
   './',
   './index.html',
+  './install.html',
   './m.styles.css',
   './m.app.js',
   './charts.js',

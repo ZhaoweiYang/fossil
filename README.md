@@ -7,6 +7,8 @@
 > 📱 **默认即为移动端 H5（接近原生 App 体验）**：底部 Tab 导航、详情以底部弹层（bottom sheet）滑出、可拖拽下滑关闭、安全区适配、并支持 **PWA「添加到主屏幕」** 后全屏独立运行。用手机打开上面的链接，或在 iOS Safari / Android Chrome 里「添加到主屏幕」即可像 App 一样使用。桌面宽屏版在 [`/desktop.html`](https://zhaoweiyang.github.io/fossil/desktop.html)。
 >
 > 🖼️ 商品配图为 **维基共享资源（Wikimedia Commons）** 上的真实化石照片（公有领域 / CC 授权），加载失败时回退为表情图标。
+>
+> 🎁 **首启开通页（[`/install.html`](https://zhaoweiyang.github.io/fossil/install.html)）**：新用户首次进入会先看到 **「0 元免费使用一年」** 的会员开通页，开通或跳过后写入 `localStorage`，之后直接进入 App。开通页用**价值堆叠 + 价格锚定 + 社会认同 + 诚实的风险逆转**（无需绑卡 / 到期不自动扣费 / 随时取消）来提升转化——刻意避免暗黑模式。想跳过引导直接看主程序，访问 `index.html?noonboard` 即可。
 
 > 该平台有两种运行形态，共用同一套前端与业务逻辑：
 > - **完整模式**：`node server.js` 启动 REST API + 静态资源（拍卖/上架/购买等状态在服务端内存中）。
