@@ -82,6 +82,19 @@ PORT=8080 node server.js
 > 注：Actions 自带的 `GITHUB_TOKEN` 无法**首次创建** Pages 站点，因此无论哪种方式，
 > 都需要先在 Settings 里手动把 Pages 打开一次。
 
+## 💳 Apple Pay 添加银行卡演示页
+
+独立单页 [`public/applepay.html`](public/applepay.html)（Pages: `/fossil/applepay.html`）：
+仿原生「Add to Apple Pay」按钮，点按后在 iOS Safari 尝试调起系统添加卡片界面，
+失败则优雅回退为「设置 → 钱包与 Apple Pay → 添加卡片」分步引导浮层。
+
+> ⚠️ 真相提醒：普通网页**无法**强制弹出 iOS 系统「设置·添加卡片」页（无公开深链接）。
+> 网页里合法「调起钱包添加界面」只有两条官方路径，页面内已说明并预留接入点：
+> ① **Add to Apple Wallet（PassKit）** —— 后端签发 `.pkpass`，把脚本里的 `PASS_URL`
+> 改成它即可真正弹出钱包面板（加的是票券，非银行卡，需 Apple 签名证书）；
+> ② **发卡行网页预置（Issuer Web Provisioning）** —— 银行官网真正的 “Add to Apple Pay”
+> 按钮，跳转 Apple 托管登录流程添加银行卡，**仅限已加入 Apple Pay 计划的发卡行**。
+
 ## 🧪 测试
 
 ```bash

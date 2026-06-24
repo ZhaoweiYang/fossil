@@ -34,6 +34,10 @@ const MIME = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
+  // Serve Apple Wallet passes with the correct MIME so Safari triggers the
+  // "Add to Wallet" sheet when applepay.html's PASS_URL points at a local .pkpass.
+  '.pkpass': 'application/vnd.apple.pkpass',
 };
 
 function sendJson(res, status, body) {

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>添加银行卡到 Apple Pay</title>
+<meta name="description" content="点击即可调起「钱包与 Apple Pay · 添加银行卡」界面（含真实 Add to Apple Wallet 流程接入点）" />
+<meta name="theme-color" content="#000000" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<!--
+  =============================================================================
+  说明（请先读这一段）
+  -----------------------------------------------------------------------------
+  普通网页**无法**强行弹出 iOS「设置 → 钱包与 Apple Pay → 添加卡片」这个系统页面：
+  Apple 不向第三方网页开放 App-Prefs: / prefs:root= 这类 URL Scheme，也没有公开的
+  深链接。能在网页里合法「调起钱包添加界面」的只有两条路：
+
+    1) Add to Apple Wallet（PassKit）：网页返回一个经过签名的 .pkpass 文件，
+       Safari 会自动弹出钱包「添加卡片/票券」面板。但它添加的是 *票券/会员卡/
+       优惠券*，**不是银行卡**；且需要 Apple 开发者签名证书。
+    2) 发卡行网页预置（Issuer Web Provisioning）：银行官网上真正的
+       “Add to Apple Pay” 按钮，会跳转到 Apple 托管的登录流程完成添加银行卡。
+       **仅限已加入 Apple Pay 计划的发卡行/银行** 使用。
+
+  因此本页的做法：点击后在 iOS 上依次尝试可用的深链接，若系统不响应，则优雅地
+  回退为「分步引导」浮层，把用户一步步带到系统的添加卡片界面；同时给出真实接入点
+  （PASS_URL）：把它配置成你后端签发的 .pkpass，按钮就会真正弹出钱包添加面板。
+  =============================================================================
+-->
+<style>
+  :root{
+    --bg:#f2f2f7; --card:#fff; --ink:#1c1c1e; --sub:#6c6c70;
+    --line:#e5e5ea; --tint:#0a84ff; --ok:#34c759; --warn:#ff9f0a;
+    --radius:18px; --pad:20px;
+    --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#000; --card:#1c1c1e; --ink:#fff; --sub:#98989f; --line:#38383a; }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",Arial,sans-serif;
+    background:var(--bg); color:var(--ink);
+    padding:max(20px,var(--safe-t)) 16px calc(40px + var(--safe-b));
+    display:flex; flex-direction:column; align-items:center; min-height:100vh;
+  }
+  .wrap{width:100%; max-width:440px}
+  header{text-align:center; margin:24px 0 20px}
+  .glyph{
+    width:74px;height:74px;margin:0 auto 14px;border-radius:18px;
+    background:linear-gradient(180deg,#2b2b2e,#000);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+  }
+  .glyph svg{width:42px;height:42px}
+  h1{font-size:24px;font-weight:700;margin:0 0 6px;letter-spacing:-.3px}
+  header p{margin:0;color:var(--sub);font-size:14.5px}
+
+  .card{
+    background:var(--card); border-radius:var(--radius); padding:var(--pad);
+    box-shadow:0 1px 0 rgba(0,0,0,.03); margin-bottom:16px;
+  }
+  .card h2{font-size:13px;font-weight:600;color:var(--sub);text-transform:uppercase;
+    letter-spacing:.4px;margin:0 0 12px}
+
+  /* 仿真银行卡 */
+  .bankcard{
+    position:relative;border-radius:16px;padding:18px 20px;color:#fff;overflow:hidden;
+    background:linear-gradient(135deg,#3a3a3c 0%,#1c1c1e 100%);
+    box-shadow:0 10px 30px rgba(0,0,0,.3); aspect-ratio:1.586/1; display:flex;
+    flex-direction:column;justify-content:space-between;
+  }
+  .bankcard::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 80% at 90% -10%,rgba(255,255,255,.18),transparent 50%)}
+  .bankcard .brand{display:flex;justify-content:space-between;align-items:center;font-size:14px;opacity:.95}
+  .chip{width:34px;height:26px;border-radius:6px;
+    background:linear-gradient(135deg,#e9d8a6,#caa44e);position:relative}
+  .chip::before{content:"";position:absolute;inset:5px 6px;
+    border:1px solid rgba(0,0,0,.25);border-radius:3px}
+  .bankcard .num{font-size:18px;letter-spacing:2px;font-variant-numeric:tabular-nums;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace}
+  .bankcard .row{display:flex;justify-content:space-between;font-size:12px;opacity:.85}
+  .bankcard .row b{display:block;font-size:13px;font-weight:600;opacity:1;margin-top:2px}
+
+  /* Add to Apple Pay 按钮（官方风格黑色胶囊） */
+  .applepay-btn{
+    -webkit-appearance:none;appearance:none;border:0;cursor:pointer;
+    width:100%;height:52px;border-radius:12px;background:#000;color:#fff;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:18px;font-weight:600;letter-spacing:.2px;margin-top:4px;
+    transition:transform .08s ease, opacity .15s ease;
+  }
+  .applepay-btn:active{transform:scale(.985);opacity:.9}
+  .applepay-btn svg{height:22px;width:auto}
+  .applepay-btn .add{font-weight:500}
+  .hint{font-size:12.5px;color:var(--sub);text-align:center;margin:10px 2px 0}
+
+  .steps{list-style:none;margin:0;padding:0;counter-reset:s}
+  .steps li{position:relative;padding:10px 0 10px 38px;border-bottom:1px solid var(--line);font-size:14.5px}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:9px;
+    width:26px;height:26px;border-radius:50%;background:var(--tint);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+  .steps b{font-weight:600}
+
+  .note{font-size:13px;color:var(--sub);line-height:1.55}
+  .note code{background:rgba(127,127,127,.16);padding:1px 6px;border-radius:5px;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;
+    background:rgba(10,132,255,.14);color:var(--tint);margin-left:6px;vertical-align:middle}
+  .tag.warn{background:rgba(255,159,10,.16);color:var(--warn)}
+
+  footer{color:var(--sub);font-size:12px;text-align:center;margin-top:8px;line-height:1.6}
+  a{color:var(--tint);text-decoration:none}
+
+  /* 引导浮层 */
+  .sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;
+    transition:opacity .25s ease;z-index:50}
+  .sheet-mask.show{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;background:var(--card);
+    border-radius:20px 20px 0 0;padding:8px 20px calc(24px + var(--safe-b));
+    transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);z-index:51;
+    max-width:480px;margin:0 auto}
+  .sheet.show{transform:translateY(0)}
+  .grabber{width:36px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 14px}
+  .sheet h3{margin:0 0 4px;font-size:19px}
+  .sheet .sub{color:var(--sub);font-size:13.5px;margin:0 0 14px}
+  .sheet .close{width:100%;height:48px;border:0;border-radius:12px;background:var(--tint);
+    color:#fff;font-size:16px;font-weight:600;margin-top:8px;cursor:pointer}
+  .sheet .ghost{width:100%;height:46px;border:0;border-radius:12px;background:rgba(127,127,127,.14);
+    color:var(--ink);font-size:15px;font-weight:500;margin-top:8px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="glyph" aria-hidden="true">
+      <!-- Apple Pay 标志（简化） -->
+      <svg viewBox="0 0 48 30" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9.3 7.2c.6-.7 1-1.7.9-2.7-.8 0-1.9.5-2.5 1.3-.6.6-1 1.7-.9 2.6.9.1 1.8-.4 2.5-1.2zM10.2 8.6c-1.4-.1-2.5.8-3.2.8-.7 0-1.7-.7-2.7-.7-1.4 0-2.7.8-3.4 2-1.4 2.5-.4 6.2 1 8.2.7 1 1.5 2.1 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0 0-2.1-.8-2.2-3.2 0-2 1.6-2.9 1.7-3-1-1.4-2.4-1.5-3-1.6z"/>
+        <text x="18" y="22" font-family="-apple-system,Helvetica,Arial" font-size="15" font-weight="600" fill="#fff">Pay</text>
+      </svg>
+    </div>
+    <h1>添加到 Apple Pay</h1>
+    <p>把银行卡添加到「钱包与&nbsp;Apple&nbsp;Pay」</p>
+  </header>
+
+  <!-- 卡片 + 主按钮 -->
+  <div class="card">
+    <div class="bankcard">
+      <div class="brand"><span>FOSSILIA Bank</span><span>VISA</span></div>
+      <div class="chip" aria-hidden="true"></div>
+      <div class="num">4•••&nbsp;&nbsp;••••&nbsp;&nbsp;••••&nbsp;&nbsp;0624</div>
+      <div class="row">
+        <span>持卡人<b>DAVID YANG</b></span>
+        <span>有效期<b>09/29</b></span>
+      </div>
+    </div>
+
+    <button class="applepay-btn" id="addBtn" aria-label="添加到 Apple Pay">
+      <span class="add">添加到</span>
+      <svg viewBox="0 0 48 20" xmlns="http://www.w3.org/2000/svg" fill="#fff" aria-hidden="true">
+        <path d="M8.3 4.4c.5-.6.85-1.45.76-2.3-.7.03-1.6.45-2.1 1.05-.46.53-.86 1.4-.75 2.22.77.06 1.55-.4 2.09-.97zM9.06 5.6c-1.2-.07-2.18.68-2.74.68-.57 0-1.43-.64-2.35-.62-1.2.02-2.32.7-2.94 1.78-1.25 2.18-.32 5.4.9 7.18.6.87 1.3 1.84 2.23 1.8.88-.03 1.22-.57 2.29-.57 1.06 0 1.37.57 2.3.55.96-.02 1.56-.88 2.15-1.76.68-1 .96-1.97.97-2.02-.02-.01-1.86-.72-1.88-2.84-.02-1.77 1.45-2.62 1.51-2.66-.83-1.22-2.12-1.36-2.57-1.39z"/>
+        <text x="14" y="15.5" font-family="-apple-system,Helvetica,Arial" font-size="13.5" font-weight="600" fill="#fff">Pay</text>
+      </svg>
+    </button>
+    <p class="hint" id="hint">在 iPhone 的 Safari 中点按，调起系统添加卡片界面</p>
+  </div>
+
+  <!-- 手动步骤 -->
+  <div class="card">
+    <h2>手动添加（适用于任何 iPhone）</h2>
+    <ol class="steps">
+      <li>打开 <b>设置</b> App</li>
+      <li>进入 <b>钱包与 Apple&nbsp;Pay</b></li>
+      <li>点按 <b>添加卡片 → 借记卡或信用卡</b></li>
+      <li>用相机扫描卡片，或手动输入卡号完成验证</li>
+    </ol>
+  </div>
+
+  <!-- 技术说明（保持诚实） -->
+  <div class="card">
+    <h2>给开发者：如何真正接入</h2>
+    <p class="note">
+      网页无法强制弹出系统「设置 · 添加卡片」页（iOS 不向第三方网页开放该深链接）。
+      合法地在网页里「调起钱包添加界面」只有两种官方方式：
+    </p>
+    <p class="note" style="margin-top:12px">
+      <b>① Add to Apple Wallet（PassKit）</b><span class="tag">票券/会员卡</span><br/>
+      后端签发一个 <code>.pkpass</code>（<code>application/vnd.apple.pkpass</code>），网页指向它，
+      Safari 自动弹出钱包添加面板。把本页顶部脚本里的 <code>PASS_URL</code> 改成你的 pkpass 地址，
+      上面的按钮就会真正弹出钱包面板。注意：pkpass 加的是票券，<b>不是银行卡</b>，且需 Apple 签名证书。
+    </p>
+    <p class="note" style="margin-top:12px">
+      <b>② 发卡行网页预置 Issuer Web Provisioning</b><span class="tag warn">仅限发卡行</span><br/>
+      银行官网真正的 “Add to Apple Pay” 按钮会跳转 Apple 托管登录流程，把<b>银行卡</b>推送到用户设备。
+      需先加入 Apple Pay 发卡行计划并完成证书/域名配置。
+    </p>
+  </div>
+
+  <footer>
+    演示页面 · 卡号为占位符，非真实银行卡<br/>
+    参考：<a href="https://support.apple.com/zh-cn/108398" target="_blank" rel="noopener">Apple 官方：设置 Apple Pay</a>
+  </footer>
+</div>
+
+<!-- 引导浮层 -->
+<div class="sheet-mask" id="mask"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="grabber"></div>
+  <h3 id="sheetTitle">前往「钱包与 Apple Pay」</h3>
+  <p class="sub" id="sheetSub">系统未自动跳转时，按下面 3 步即可手动打开添加卡片界面 👇</p>
+  <ol class="steps" style="margin-bottom:6px">
+    <li>打开 <b>设置</b></li>
+    <li>进入 <b>钱包与 Apple Pay</b></li>
+    <li>点 <b>添加卡片</b> → 借记卡或信用卡</li>
+  </ol>
+  <button class="close" id="tryAgain">再试一次自动跳转</button>
+  <button class="ghost" id="sheetClose">我知道了</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ===== 配置 =====
+  // 想要“点一下就弹出钱包添加面板”？把这里改成你后端签发的 .pkpass 地址即可。
+  // 例：const PASS_URL = "https://your.api/wallet/card.pkpass";
+  const PASS_URL = ""; // 留空 = 使用深链接尝试 + 分步引导回退
+
+  // iOS 上有可能（取决于系统版本）唤起钱包/设置的深链接，依次尝试。
+  // 注：均非公开 API，新版本 iOS 可能不响应——所以一定有引导浮层兜底。
+  const DEEP_LINKS = [
+    "shoebox://",                 // 钱包内部 scheme（部分版本可唤起钱包）
+    "App-Prefs:root=PASSBOOK",    // 设置·钱包与 Apple Pay（多数版本对网页禁用）
+    "prefs:root=PASSBOOK"
+  ];
+
+  const ua = navigator.userAgent || "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  const btn   = document.getElementById("addBtn");
+  const hint  = document.getElementById("hint");
+  const mask  = document.getElementById("mask");
+  const sheet = document.getElementById("sheet");
+
+  if(!isIOS){
+    hint.textContent = "请在 iPhone 的 Safari 中打开本页面，再点按按钮";
+  }
+
+  function openSheet(){ mask.classList.add("show"); sheet.classList.add("show"); }
+  function closeSheet(){ mask.classList.remove("show"); sheet.classList.remove("show"); }
+
+  // 尝试调起：优先用真实 pkpass（会真正弹出钱包面板）；否则尝试深链接 + 引导兜底。
+  function invokeAddCard(){
+    if(PASS_URL){
+      // 直接导航到 pkpass，Safari 会接管并弹出钱包添加面板
+      window.location.href = PASS_URL;
+      return;
+    }
+
+    if(!isIOS){ openSheet(); return; }
+
+    let i = 0, opened = false;
+    // 页面被切到后台（说明某个 scheme 成功唤起了系统界面）
+    const onHide = () => { if(document.hidden) opened = true; };
+    document.addEventListener("visibilitychange", onHide, {once:false});
+
+    function tryNext(){
+      if(opened || i >= DEEP_LINKS.length){
+        document.removeEventListener("visibilitychange", onHide);
+        if(!opened) openSheet();        // 全部失败 → 分步引导兜底
+        return;
+      }
+      const url = DEEP_LINKS[i++];
+      // 用隐藏 iframe 触发，避免失败时出现刺眼的“无法打开页面”
+      const ifr = document.createElement("iframe");
+      ifr.style.display = "none";
+      ifr.src = url;
+      document.body.appendChild(ifr);
+      setTimeout(()=>{ ifr.remove(); tryNext(); }, 350);
+    }
+    tryNext();
+  }
+
+  btn.addEventListener("click", invokeAddCard);
+  document.getElementById("sheetClose").addEventListener("click", closeSheet);
+  document.getElementById("tryAgain").addEventListener("click", ()=>{ closeSheet(); setTimeout(invokeAddCard, 250); });
+  mask.addEventListener("click", closeSheet);
+})();
+</script>
+</body>
+</html>
